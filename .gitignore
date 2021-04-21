@@ -1,0 +1,10 @@
+_pycache_
+.pytest_cache
+.vscode
+env
+
+*.xlsx
+*.csv
+*.env
+
+*.log
