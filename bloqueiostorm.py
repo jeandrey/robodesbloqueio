@@ -1,3 +1,4 @@
+from numpy import nan
 import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -12,7 +13,7 @@ logging.basicConfig(filename='logs.log', encoding='utf-8', level=logging.DEBUG,f
 
 
 
-logica = {"OUTROS":'89',"BANCO SANTADER":"55","BANCO BMG":"52","BANCO DAYCOVAL":"93","BANCO ITAÚ CONSIGNADO":"95","BANCO OLÉ CONSIGNADO":"41","BANCO MERCANTIL DO BRASIL":"58","DAYCOVAL - CRÉDITO PESSOAL":"101","BANCO ITAÚ":"95"}
+logica = {"OUTROS":'89',"BANCO SANTADER":"55","BANCO BMG":"52","BANCO DAYCOVAL":"93","BANCO ITAÚ CONSIGNADO":"95","BANCO OLÉ CONSIGNADO":"41","BANCO MERCANTIL DO BRASIL":"58","DAYCOVAL - CRÉDITO PESSOAL":"101","BANCO ITAÚ":"95","BANCO VOTORANTIM":"76","CCB BRASIL (BIC)":"97","CCB BRASIL FINANCEIRA (SUL FINANCEIRA)":"98","BANCO INTER":"99","BANCO SABEMI ":"83","BANCO CBSS":"119","BANCO PRIVADO-OUTROS":"111","CIASPREV":"124","BANCO PAN":"70","BANCO BANRISUL":"106","BANCO CETELEM":"110"}
 
 
 
@@ -33,7 +34,7 @@ class robo_request():
         # url =  'https://homologacao4.stormfin.com.br'
         url =  'https://www.fontesassessoriafinanceira.com.br/'
         data = {"usuario":os.environ['USER_HOMOLOG'],"senha":os.environ['PASS_HOMOLOG'],"forceLogout":"1","logar":"Entrar"}
-        self.headers = {'content-type': 'application/x-www-form-urlencoded'}
+        self.headers = {'content-type': 'application/x-www-form-urlencoded','User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36'}
         login = self.session.post(url, headers=self.headers, data=data)
         logging.info('login Feito')
         self.para_cada_banco()
@@ -42,11 +43,15 @@ class robo_request():
     def para_cada_banco(self):
         logging.info('mapeando campos')
         for element in self.tipo_bancos:
-            if element =='BANCO BMG':
-                continue
             logging.info(f'Lendo {element}')
             self.usuarios_bancos = self.df[self.df['Banco']==element].reset_index()
-            self.id_banco = logica[element]
+            if element==nan:
+                continue
+            try:
+                self.id_banco = logica[element]
+            except:
+                logging.info(f'Banco não encontrado {element}')
+                continue
             self.lista_usuario_por_banco(self.id_banco)
     
 
@@ -67,6 +72,16 @@ class robo_request():
         for usuario in range (len(self.usuarios_bancos)):
             if self.usuarios_bancos['Código Usuário Banco'][usuario] in self.usuarios_filtrados:
                 index = self.usuarios_filtrados.index(self.usuarios_bancos['Código Usuário Banco'][usuario])
+                statico = {"ba_id":self.id_banco,"ub_id":self.todos_ub_id[index]}
+                continue###mudar depois
+                self.abrindo_formulario(statico)
+            elif str(self.usuarios_bancos['Código Usuário Banco'][usuario]).strip() in self.usuarios_filtrados:
+                index = self.usuarios_filtrados.index(str(self.usuarios_bancos['Código Usuário Banco'][usuario]).strip())
+                statico = {"ba_id":self.id_banco,"ub_id":self.todos_ub_id[index]}
+                self.abrindo_formulario(statico)
+
+            elif '0'+str(self.usuarios_bancos['Código Usuário Banco'][usuario]).strip() in self.usuarios_filtrados:
+                index = self.usuarios_filtrados.index('0'+str(self.usuarios_bancos['Código Usuário Banco'][usuario]).strip())
                 statico = {"ba_id":self.id_banco,"ub_id":self.todos_ub_id[index]}
                 self.abrindo_formulario(statico)
                 
